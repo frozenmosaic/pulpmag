@@ -1,0 +1,78 @@
+TWO APPROACHES IN ACCESSING FILES:
+  1) keep all the files as where they are and accessed them directly
+  2) go with the template model: create a template for each type of content page, and move all specific info to database
+  3) combine both: first approach for existing files, second approach for new files from now on
+
+NEW STRUCTURE:
+  [within CodeIgniter's 'application' folder]
+
+*option A:
+  views
+    web_content
+      general
+        about.html
+        contacts.html
+      content
+        title
+          time
+            info
+            pdf
+            xml
+            flb
+
+*option B:
+  views
+    web_content
+      general
+        about.html
+        contacts.html
+      content
+        title (title page of each publication)
+        info (history info page of each publication)
+        issue (issue content in 3 formats)
+          pdf (folder)
+          xml (folder)
+          flb (folder)
+          html (folder)
+
+ ☐ should web_content be placed inside folder 'assets', or splitted and placed in folder 'views'?
+ ☐ does B make it easier to maintain and update and add new files (for eg, new issue/publication)?
+ ☐ how to load view in nested folders? => helper methods to generate file path?
+RE-CATEGORIZING AND NEW ROUTING RULES:
+
+  general pages: including
+    about, 
+    contact, 
+    home, etc.
+
+  [dm]/[general] 
+
+  content pages: including
+    title pages (listing all issues of each title), 
+    title history, 
+    issue content (in 3 formats)
+
+  [dm]/[title] <- title page
+  [dm]/[title]/info <- title history
+  [dm]/[title]/[yyyy]/[mm]/[dd]
+  [dm]/[title]/[vv]/[ii]
+  pulpmags.org/two_gun_western/03/04
+  [dm]/[title]/[time]/pdf <- issue content in pdf
+  [dm]/[title]/[time]/xml
+  [dm]/[title]/[time]/flb
+
+ACCESS METHODS:
+  p_i, p_ii, p_iii and p_iv all have 'url' column to store exact name of file to be load
+
+  two new controllers: 'general' and 'content'
+
+  *to access any page of content type:
+    redirect to controller 'content'
+    controller loads model and uses model to obtain 'url'
+    controller then loads view by using data from 'url'
+
+QUESTIONS/REVIEW:
+  ☐ if using approach 1, then why implementing new foreign keys?
+  => by implementing foreign keys, or the new database structure, new files from now on must make use of this
+  ☐ what obstacles posed by each approach in terms of time/effort and code redesigning?
+  ☐ how a web root folder using CodeIgniter used on GoDaddy?

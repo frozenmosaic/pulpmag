@@ -1,0 +1,49 @@
+NOV 16, 2015
+next step:
+  ☐ migrate database
+  ☐ restructure folder using CodeIgniterw
+Hypothetical restructuring plan:
+  ☐ after initial examining, these observations are drawn:
+  I.
+  (1) the folder after all is not that complicated. it is a collection of all html pages and all assets (images, covers, backgrounds, icons, texts) of the entire website.
+  (2) first step would then be to reorganize the whole folder into a certain system (to be devised later).
+  (3) this would entail creating the routing rules for website to access these files correctly and to format url patterns.
+  (4) at the same time, database improvement also needs to take place to update url/access paths, and to allow easier access for individual page.
+
+  II.
+  one of the characteristics of the website is that it consists almost entirely static contents.
+  this calls for the use of templates instead of writing a html file corresponding to one static page. 
+
+  III.
+  looking broadly, there are four main tasks to do
+    . reorganize folder
+    . database improvement
+    . routing rules 
+    . code refactoring into MVC pattern to allow fast and simple multiplication of same-template pages (for e.g., title pages)
+    . CSS library (for e.g, purecss)
+    . UX
+
+ ☐ based on these observations, to construct a simplistic but comprehensive to the best extent restructuring plan requires these components:
+   +1) hypothetical folder tree and the respective contents of each folder within CodeIgniter framework. this tree represents the structure of the whole website.
+   +2) new database schema after
+    creating foreign keys for relational database
+    renaming columns 
+    deleting duplicate columns
+    merging (if any)
+   +3) proposed routing rules based on folder tree
+   +4) list of all controllers, models and views and their respective design/interface
+    how many in total
+    how many controllers and why only those controllers based on the design of the folder tree
+    how many models and what they control (what their instances are)
+    how many views and the multiplication/mass producing capacity of these templates/views
+
+    +5) improve web layout using CSS library
+
+  ☐ the first component has to be done first and foremost. the next three components could be worked on simultaneously.
+
+
+ Code restructuring:
+  ☐ how to restructure into MVC pattern certain files without intefering with the current system? *refer to email sent to Belk 
+  ☐ refactor seach.php into home_page.php (view), search.php (controller), and search.php (model; may have to draw from results.php as well)
+
+  info@pulpmags.org

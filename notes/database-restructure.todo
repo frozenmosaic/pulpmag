@@ -1,0 +1,88 @@
+OCT 16-17, 2015
+
+papyrus_i:
+  *description: metadata of each title
+  ☐ new structure:
+  recordID -> id. natural primary key.
+  ALTER: catID. changed to: titleID. foreign key to connect p_i and p_ii. sample format: "2GW"
+  url_port -> url. name of file. format: no extension, passed at param to retrieve file.
+  title
+  form
+  genr -> genre
+  freq 
+  est
+  publ -> publisher
+  pubAdd -> address
+  pubLoc -> location
+  pubNat -> country
+  coINO ??
+  total
+
+papyrus_ii:
+   *description: metadata of each issue of each title
+   ☐ new structure:
+   recordID -> id. natural primary key.
+   p2_catID -> what use?
+   ADD: issueID. p_ii and p_iii. sample format: titleID_[yy][mm]
+   ALTER: p2_refID. change to: titleID. p_i and p_ii. use: to obtain metadata of title and apply to issues of such title.
+   p2_url -> url. name of file. format: no extension.
+   DELETE: p2_title (duplicate info from p_i)
+   p2_vol -> volume. QUESTION: format "Vol. 3" or "3"?
+   p2_no -> no. same question as above.
+   p2_year -> year
+   p2_date -> date
+   p2_edit -> editor
+   DELETE: p2_publ (duplicate info form p_i)
+   p2_pp -> pp
+   p2_ppc -> ppc
+papyrus_iii:
+    *description: metadata of each story in each issue
+    ☐ new structure:
+    recordID -> id. natural primary key.
+    p3_catID -> 
+    ALTER: p3_refID -> issueID. 
+    MOVE UP: p3_pageID -> pageID
+    p3_url -> url. name of file. format: no extension.
+    p3_title -> title
+    p3_part -> part
+    p3_pers -> person
+    p3_role -> role
+    p3_genr -> genre
+    p3_blurb -> blurb
+    p3_notes -> notes
+
+papyrus_iv: 
+    *description: content of each page of each issue
+    ☐ new structure:
+    recordID -> id. natural primary key.
+    ADD: issueID. p_ii and p_iv.
+    ADD: pageID. p_iv and pa_i.
+    p4_catID -> 
+    MAY DELETE: p4_docID  
+    MAY DELETE: p4_refID 
+    p4_pgID -> page_no. number of the page in the issue, not pageID.
+    p4_textPG -> text
+    p4_chrLN ??
+    p4_divID ??
+
+pathos_i:
+  *description: sentiment analysis of each page of each issue
+  ☐ new structure:
+  t8_recordID -> id. natural primary key.
+  ADD: pageID. foreign key to connect p_iv and pa_i.
+  MAY DELETE: t8b1_refID 
+  MAY DELETE: t8b1_catID
+  t8b1_html ??
+QUESTIONS:
+    ☐ is MySQL data case-sensitive? => yes
+    ☐ principles of good database design? and in this particular project of static and hierarchial contents?
+    ☐ how important is the format of the data for each column?
+    ☐ any ways to combine titleID, issueID, pageID? is there strictly one foreign key for two tables, or could the key be used for multiple tables in a hierarchial order?
+    ☐ conventions for format for titleID, issueID, pageID?
+    ☐ how descriptive should column names be?
+    ☐ for each table, is the natural primary necessary since titleID, issueID and pageID are always unique?
+  
+NOTES:
+    ☐ may need to delete important and existing columns (see p_iv) bc of new IDs format and structure.
+
+
