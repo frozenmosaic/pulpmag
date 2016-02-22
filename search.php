@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 global $dbo;
 
@@ -11,9 +11,9 @@ $dbConnString        = "mysql:host=" . $info['dbhost_name'] . "; dbname=" . $inf
 try {
     $dbo = new PDO($dbConnString, $info['username'], $info['password']);
     $dbo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+    $dbo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 1);
 
-}
-catch (PDOException $e) {
+} catch (PDOException $e) {
     echo $e->getMessage();
 }
 
@@ -68,108 +68,93 @@ catch (PDOException $e) {
                     <div class="blurb" id="blurb">
                         <h2 align="center" class="c3">[ Full-Text Search and Data Modeling ]</h2>
                         <p align="center" class="c4">[
-                            
+
                             <span class="style50">Author</span> |
-                            
                             <span class="style50">Title</span> |
-                            
                             <span class="style50">Magazine</span> |
-                            
                             <span class="style50">Publisher</span> |
-                            
                             <span class="style50">Editor</span> |
-                            
                             <span class="style50">Keyword</span> ]
-                        
+
                         </p>
                         <p align="justify">Funded by grants from
-                            
+
                             <a href="http://www.mellon.org/" target="_blank">The Andrew W. Mellon Foundation</a> and
-                            
+
                             <a href="http://www.dickinson.edu/" target="_blank">Dickinson College</a>, this site features searchable text and bibliographic metadata for over
-                            
+
                             <strong>[ 300 ]</strong> American fiction magazines from the early twentieth century. It holds 30,000,000
-                            
+
                             <span class="style52">words</span>, distributed across 65,824 individual
-                            
+
                             <span class="style52">pages</span>, 87,744
-                            
+
                             <span class="style52">columns</span>, 818,192
-                            
+
                             <span class="style52">paragraphs</span>, and 3,821,280
-                            
+
                             <span class="style52">column lines</span>. It catalogs 9,904
-                            
+
                             <span class="style53">items</span> by 4,576
-                            
+
                             <span class="style53">authors</span>, including 7,230
-                            
+
                             <span class="style51">stories</span>, 495
-                            
+
                             <span class="style51">poems</span>, and 1,980
-                            
+
                             <span class="style51">items</span> of
-                            
+
                             <span class="style51">editorial matter</span>. There are also 7,254
-                            
+
                             <span class="style51">advertisements</span>. We are developing algorithms to search within the documents, compute patterns between them, and return cross-collection comparisons to identify clusters based on
-                            
+
                             <span class="style46">term frequencies</span>,
-                            
+
                             <span class="style46">topic modeling</span>,
-                            
+
                             <span class="style46">sentiment analysis</span>, and combinations of terms using
-                            
+
                             <span class="style46">Boolean operators</span>. For now a basic
-                            
+
                             <span class="style46">metadata search</span> will locate
-                            
+
                             <span class="style53">issues</span> by
-                            
+
                             <span class="style50">[TITLE]</span>,
-                            
+
                             <span class="style50">[PUBLISHER]</span>,
-                            
+
                             <span class="style50">[EDITOR]</span>, or primary
-                            
+
                             <span class="style50">[GENRE]</span>. The
-                            
+
                             <span class="style46">keyword search</span> is currently set to return individual
-                            
+
                             <span class="style53">items</span> by
-                            
+
                             <span class="style50">[TITLE]</span>, i.e., the
-                            
+
                             <span class="style51">stories</span>,
-                            
+
                             <span class="style51">poems</span>, and
-                            
+
                             <span class="style51">essays</span> within each magazine. And still under development, but functional, a classic
-                            
+
                             <span class="style46">full-text search</span> will match all
-                            
+
                             <span class="style53">pages</span> containing your
-                            
+
                             <span class="style50">[SEARCH TERMS]</span>.
-                        
+
                         </p>
-                        
-                        <!-- // Displaying the METADATA search box  -->
+
+                        <!-- Displaying the METADATA search box  -->
                         <table width=99% align=center>
                             <form method=get action='results.php'>
                                 <input type="hidden" name="q" value=metadata/>
                                 <td valign=top align=center width=25%>
-                                    <input type="text" size="50" name="search_text" value='$search_text'/>
-                                </td>
-                                <td valign=top align=center width=25%>
-                                    <input type=radio name="type" value='MATCH ANY WHERE' checked/>Match any where
-    
-        
-                                </td>
-                                <td valign=top align=center width=25%>
-                                    <input type=radio name="type" value='EXACT TERM MATCH'/>Exact term match
-    
-        
+                                    <input type="text" size="50" name="search_text"/>
                                 </td>
                                 <td valign=top align=center width=25%>
                                     <input type=submit value='Search Metadata' class=form-submit/>
@@ -184,15 +169,15 @@ catch (PDOException $e) {
                                         <input type=hidden name="q" value=fulltext/>
                                         <td valign=top align=center width=25%>
                                             <br/>
-                                            <input type=text size=50 name=search_text value='$search_text'/>
+                                            <input type=text size=50 name=search_text/>
                                         </td>
                                         <td valign=bottom align=center width=25%>
                                             <input type=radio name=type value='NATURAL LANGUAGE MODE' checked/>Natural language
-                
+
                                         </td>
                                         <td valign=bottom align=center width=25%>
                                             <input type=radio name=type value='BOOLEAN MODE'/>In Boolean mode
-                
+
                                         </td>
                                         <td valign=top align=center width=25%>
                                             <br/>
@@ -229,9 +214,33 @@ if (strlen($search_text) > 0) {
                                 <td>[ coh ]</td>
                                 <td>[ ext ]</td>
                             </tr>
-<?php 
-$query="SELECT * FROM title ORDER BY title_uid ASC";
- 
+<?php
+$attributes = array(
+    'title_j',
+    'primary_genre',
+    'size_format',
+    'frequency',
+    'date_est',
+    'name',
+    'address',
+    'city',
+    'nation',
+    'digitized_copy',
+    'published_copy',
+);
+$sql =
+    "SELECT `title`.*, `persons`.`name`, `publishers`.*
+    FROM title, publishers, persons
+    WHERE `title`.`person_id` = `persons`.`id` AND `title`.`publishers_id` = `publishers`.`id`";
+
+try {
+    $stmt = $dbo->query($sql);
+    $res  = $stmt->fetchAll();
+} catch (PDOException $e) {
+    print_r($e->getMessage());
+    die();
+}
+
 $rowColor = array(
     '2gw' => '#ffcc66',
     'adv' => '#fffbbb',
@@ -248,37 +257,33 @@ $rowColor = array(
     'sma' => '#fffaaa',
     'wei' => '#ffcc77');
 
-foreach ($dbo->query($query) as $row) { ?>    
+foreach ($res as $row) {
+    ?>
 
-                            <tr style="background-color:<?php echo $rowColor[$row['title_uid']]; ?>">
-                            
-                                <td>
-                                    <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
-                                        <em>
-                                            <?php echo $row['title_title_j']; ?>
-                                        </em>
-                                    </a>
-                                </td>
-                                <td><?php echo $row['title_format_size'] . $row['title_format_paper']; ?></td>
-                                <td><?php echo $row['genre_p']; ?></td>
-                                <td><?php echo $row['title_pub_freq']; ?></td>
-                                <td><?php echo $row['date_est']; ?></td>
-                                <td><?php echo $row['title_pers_name']; ?></td>
-                                <td><?php echo $row['title_imprint']; ?></td>
-                                <td><?php echo $row['pub_add']; ?></td>
-                                <td><?php echo $row['pub_city'] . $row['pub_stat']; ?></td>
-                                <td><?php echo $row['pub_nat']; ?></td>
-                                <td><?php echo $row['title_total_dig']; ?></td>
-                                <td><?php echo $row['title_total_pub']; ?></td>
-                            </tr>
-                        
-<?php } ?>
+    <tr style="background-color:<?php echo $rowColor[$row['title_id']]; ?>">
+        <td>
+            <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
+                <em>
+                    <?php echo $row['title_j']; ?>
+                </em>
+            </a>
+        </td>
+    <?php
+    foreach ($attributes as $value) {
+        echo "<td>" . $row[$value] . "</td>";
+    }
+    ?>
+
+    </tr>
+
+<?php }
+?>
     </table>
                         <br>
-                            <p align=center>Return to 
-        
+                            <p align=center>Return to
+
                                 <a href=search.php>top</a> of the page.
-    
+
                             </p>
                         </div>
                         <div class="c2" id="menu"></div>

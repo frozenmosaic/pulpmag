@@ -51,8 +51,9 @@ UPDATE `item` SET `person_id` = (
 
 -- delete person name and role from each table
 
-ALTER TABLE `title` DROP `title_pers_name`, `title_pers_role`;
-
-ALTER TABLE `issue` DROP `issue_pers_name`, `issue_pers_role`;
-
-ALTER TABLE `item` DROP `item_pers_name`, `item_pers_role`;
+ALTER TABLE `title` DROP `title_pers_name`;
+ALTER TABLE `title` DROP `title_pers_role`;
+ALTER TABLE `issue` DROP `issue_pers_name`;
+ALTER TABLE `issue` DROP `issue_pers_role`;
+ALTER TABLE `item` DROP `item_pers_name`;
+ALTER TABLE `item` DROP `item_pers_role`;
