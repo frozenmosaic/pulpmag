@@ -152,7 +152,7 @@ try {
                         <!-- Displaying the METADATA search box  -->
                         <table width=99% align=center>
                             <form method=get action='results.php'>
-                                <input type="hidden" name="q" value=metadata/>
+                                <input type="hidden" name="q" value="metadata">
                                 <td valign=top align=center width=25%>
                                     <input type="text" size="50" name="search_text"/>
                                 </td>
@@ -166,7 +166,7 @@ try {
                             <tr>
                                 <td>
                                     <form method=get action='results.php'>
-                                        <input type=hidden name="q" value=fulltext/>
+                                        <input type=hidden name="q" value="fulltext"/>
                                         <td valign=top align=center width=25%>
                                             <br/>
                                             <input type=text size=50 name=search_text/>

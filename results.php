@@ -37,7 +37,7 @@ $dbo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
                 background-color: #FFCC00;
                 border: 0.2em double #666666;}
             </style>
-        <script>
+<script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -112,6 +112,9 @@ $dbo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
                         <span class="style53">pages</span> containing your
                         <span class="style50">[SEARCH TERMS]</span>.
                     </p>
+                </div>
+            </div>
+        </div>
 
 <?php
 
@@ -125,22 +128,21 @@ if (empty($search_text) || strlen($search_text) == 0) {
 /**
  * search metadata
  */
-$query_view = 
-    "CREATE VIEW metadata as 
-        SELECT `title`.*, `persons`.`name` as `pers_name, `publishers`.*
-        FROM title, publishers, persons
-        WHERE `title`.`person_id` = `persons`.`id` AND `title`.`publishers_id` = `publishers`.`id`";
-$dbo->exec($query_view);
-
+// $query_view =
+//     "CREATE VIEW metadata as
+//         SELECT `title`.*, `persons`.`name` as `pers_name, `publishers`.*
+//         FROM title, publishers, persons
+//         WHERE `title`.`person_id` = `persons`.`id` AND `title`.`publishers_id` = `publishers`.`id`";
+// $dbo->exec($query_view);
+$search_result = array();
 if (isset($q) and $q == "metadata") {
-    $type        = $_GET['type'];
     $search_text = trim($search_text);
 
     // perform exact match
     $query =
-        "SELECT * 
+        "SELECT *
         FROM metadata
-        AND `title_j` = $search_text OR
+        WHERE `title_j` = $search_text OR
             `pers_name` = $search_text OR
             `name` = $search_text OR
             `primary_genre` = $search_text OR
@@ -148,13 +150,106 @@ if (isset($q) and $q == "metadata") {
         ORDER BY `title_j`
     ";
 
-    // perform match anywhere
-    $terms = explode(" ", $search_text);
+    $exact = array();
+    try {
+        // echo $query;
+        $stmt = $dbo->query($query);
 
-/**
- * search full-text
- */
-} elseif (isset($q) and $q == "fulltext") {
+        if ($stmt != false) {
+            $exact = $stmt->fetchAll();
+        }
+    } catch (PDOException $e) {
+        print_r($e->getMessage());
+    }
+    foreach ($exact as $row) {
+        $search_result[] = $row;
+    }
+
+    // perform match anywhere
+    $any   = array();
+    $terms = explode(" ", $search_text);
+    foreach ($terms as $value) {
+        if (!empty($value)) {
+            $query =
+                "SELECT *
+                FROM metadata
+                WHERE title_j LIKE '%$value%' OR
+                        pers_name LIKE '%$value%' OR
+                        name LIKE '%$value%' OR
+                        primary_genre LIKE '%$value%' OR
+                        secondary_genre LIKE '%$value%'";
+            try {
+                $stmt = $dbo->query($query);
+                if ($stmt != false) {
+                    $any[] = $stmt->fetchAll();
+                }
+            } catch (PDOException $e) {
+                print_r($e->getMessage());
+            }
+        }
+    }
+
+    foreach ($any as $row) {
+        $search_result[] = $row;
+    }
+}
+?>
+
+
+<table width=99% border=1 align=center cellpadding=3>
+    <tr style='font-weight:bold'>
+        <td>[ journal_title ]</td>
+        <td>[ format_paper ]</td>
+        <td>[ genre_subgenre ]</td>
+        <td>[ pub_schedule ]</td>
+        <td>[ date_est ]</td>
+        <td>[ pers_editor ]</td>
+        <td>[ org_imprint ]</td>
+        <td>[ loc_address ]</td>
+        <td>[ city_state ]</td>
+        <td>[ country_org ]</td>
+        <td>[ coh ]</td>
+        <td>[ ext ]</td>
+    </tr>
+
+    <?php
+foreach ($search_result as $val) {
+    foreach ($val as $row) {
+
+        ?>
+        <tr>
+            <td>
+                <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
+                    <em><?php echo $row['title_j']; ?></em>
+                </a>
+            </td>
+    <?php
+$attributes = array(
+            'primary_genre',
+            'size_format',
+            'paper_format',
+            'frequency',
+            'date_est',
+            'name',
+            'address',
+            'city',
+            'nation',
+            'digitized_copy',
+            'published_copy',
+        );
+        foreach ($attributes as $value) {
+            echo "<td>" . $row[$value] . "</td>";
+        }
+        ?>
+
+        </tr>
+<?php }
+}
+?>
+
+</table>
+<?php 
+if (isset($q) && $q == "fulltext") {
     $type        = $_GET['type'];
     $search_text = trim($search_text);
 
@@ -184,25 +279,26 @@ if (isset($q) and $q == "metadata") {
             LIMIT 0, 250";
     }
 
-}
+    try {
+        $stmt     = $dbo->query($query);
+        $fulltext = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        print_r($e->getMessage());
+    }
+    foreach ($fulltext as $row) {
+        $search_result[] = $row;
+    }
 
-try {
-    $stmt = $dbo->prepare($query);
-    $stmt->execute();
-} catch (PDOException $e) {
-    print_r($e->getMessage());
-}
-
-$no = $stmt->rowCount();
-
+// $no = $search_result->rowCount();
+    $no = 0;
 if ($no == 0) {
-    ?>
-    <br /><p align=center>No records matched your search for. Try a different search string or phrase combination.</p>";
+        ?>
+    <br /><p align=center>No records matched your search.</p>";
     <p align=justify><span class=\"style17\"> \"" . $query . "\" </span></p>
 <?php
 } else {
-    if ($no > 0) {
-        ?>
+        if ($no > 0) {
+            ?>
 
     <table width=99% border=1 align=center cellpadding=1><tr style='background-color:#ffcc66'>
             <td><span class=style46>[relevance]</span></td>
@@ -215,24 +311,27 @@ if ($no == 0) {
             <td align=right><span class=style46>[ @FACS ]</span></td></tr>
 <?php
 $rowColor = array(
-            '2gw' => '#fffddd',
-            'adv' => '#fffbbb',
-            'ams' => '#FFFFFF',
-            'bed' => '#ffcc99',
-            'bm'  => '#fffbbb',
-            'dsm' => '#FFFFFF',
-            'ico' => '#fffddd',
-            'liv' => '#FFFFFF',
-            'lsm' => '#fffbbb',
-            'nlt' => '#fffddd',
-            'ran' => '#fffbbb',
-            'sau' => '#fffddd',
-            'sma' => '#FFFFFF',
-            'wei' => '#fffbbb');
+                '2gw' => '#fffddd',
+                'adv' => '#fffbbb',
+                'ams' => '#FFFFFF',
+                'bed' => '#ffcc99',
+                'bm'  => '#fffbbb',
+                'dsm' => '#FFFFFF',
+                'ico' => '#fffddd',
+                'liv' => '#FFFFFF',
+                'lsm' => '#fffbbb',
+                'nlt' => '#fffddd',
+                'ran' => '#fffbbb',
+                'sau' => '#fffddd',
+                'sma' => '#FFFFFF',
+                'wei' => '#fffbbb');
 
-        foreach ($dbo->query($query) as $row) {
-
+            foreach ($search_result as $row) {
+            }
         }
-
     }
 }
+?>
+    </body>
+    </html>
+

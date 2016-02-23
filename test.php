@@ -15,33 +15,66 @@ try {
 } catch (PDOException $e) {
     echo $e->getMessage();
 }
+$search_text = 'western';
 
-$query_view = 
-    "CREATE VIEW metadata as 
-        SELECT `title`.*, `persons`.`name`, `publishers`.*
-        FROM title, publishers, persons
-        WHERE `title`.`person_id` = `persons`.`id` AND `title`.`publishers_id` = `publishers`.`id`";
-$dbo->exec($query_view);
-$search_text = 'sherlock';
 $query =
-        "SELECT * 
+        "SELECT *
         FROM metadata
-        AND `title`.`title_j` = $search_text OR
-            `persons`.`name` = $search_text OR
-            `publishers`.`name` = $search_text OR
-            `title`.`primary_genre` = $search_text OR
-            `title`.`secondary_genre` = $search_text;
-        ORDER BY `title`.`title_j`
+        WHERE `title_j` = $search_text OR
+            `pers_name` = $search_text OR
+            `name` = $search_text OR
+            `primary_genre` = $search_text OR
+            `secondary_genre` = $search_text;
+        ORDER BY `title_j`
     ";
-try {
-    $res = $dbo->query($query);
-} catch (PDOException $e) {
-    print_r($e->getMessage());
-}
-// $res = $res->fetchAll();
 
-// foreach ($res as $row) {
-//     print_r("<pre>");
-//     print_r($row);
-//     print_r("</pre>");
-// }
+    $exact = array();
+    try {
+        // echo $query;
+        $stmt = $dbo->query($query);
+
+        if ($stmt != false) {
+            $exact = $stmt->fetchAll();
+        }
+    } catch (PDOException $e) {
+        print_r($e->getMessage());
+    }
+    foreach ($exact as $row) {
+        $search_result[] = $row;
+    }
+
+    // perform match anywhere
+    $any   = array();
+    $terms = explode(" ", $search_text);
+    foreach ($terms as $value) {
+        if (!empty($value)) {
+            $query =
+                "SELECT *
+                FROM metadata
+                WHERE title_j LIKE '%$value%' OR
+                        pers_name LIKE '%$value%' OR
+                        name LIKE '%$value%' OR
+                        primary_genre LIKE '%$value%' OR
+                        secondary_genre LIKE '%$value%'";
+            try {
+                $stmt = $dbo->query($query);
+                if ($stmt != false) {
+                    $any[] = $stmt->fetchAll();
+                }
+            } catch (PDOException $e) {
+                print_r($e->getMessage());
+            }
+        }
+    }
+
+    foreach ($any as $row) {
+        $search_result[] = $row;
+    }
+
+foreach ($search_result as $row ) {
+print_r("<pre>");
+print_r($row);
+print_r("</pre>");
+}
+
+
