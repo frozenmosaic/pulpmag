@@ -149,10 +149,10 @@ try {
 
                         </p>
 
-                        <!-- Displaying the METADATA search box  -->
+                        <!-- Display search box  -->
                         <table width=99% align=center>
                             <tr>
-                                <form method="post" action="process.php">
+                                <form method="post" action="results.php">
                                     <td valign=top align=center width=25%>
                                         <input type="text" size="50" name="search_text"/>
                                     </td>

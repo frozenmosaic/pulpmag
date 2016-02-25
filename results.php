@@ -122,7 +122,7 @@ $search_type = $_POST['search_type'];
 $search_text = $_POST['search_text'];
 $operand     = $_POST['operand'];
 
-$search_text = trim($search_text);
+$search_text  = trim($search_text);
 $search_terms = explode(" ", $search_text);
 
 if (empty($search_text) || strlen($search_text) == 0) {
@@ -134,7 +134,7 @@ if (empty($search_text) || strlen($search_text) == 0) {
  */
 
     $search_result = array();
-    if ($search_type == "metadata") {
+    if ($search_type == "Search Metadata") {
 
         // perform exact match
         $query =
@@ -164,7 +164,7 @@ if (empty($search_text) || strlen($search_text) == 0) {
         }
 
         // perform match anywhere
-        $any   = array();
+        $any = array();
         foreach ($search_terms as $value) {
             if (!empty($value)) {
                 $query =
@@ -246,26 +246,30 @@ $attributes = array(
 
 </table>
 <?php
-if ($search_type == "fulltext") {
-        $group = "JOIN item ON page.item_id = item.item_uid 
-            JOIN issue ON item.issue_id = issue.issue_uid 
-            JOIN title ON issue.title_id = title.title_uid
-            JOIN mod_stb ON page.text_uid = mod_stb.text_uid 
-            JOIN mod_std ON page.issue_id = mod_std.doc_uid 
-            JOIN mod_stg ON title.genre_p = mod_stg.mod_uid
-            JOIN mod_snt ON page.text_uid = mod_snt.text_uid 
-            JOIN mod_tma ON page.text_uid = mod_tma.text_uid 
-            JOIN topic_clusters ON mod_tma.topic1 = topic_clusters.key_uid";
+if ($search_type == "Search Full-text") {
+        $group = "page, item, issue, title 
+                WHERE page.issue_id = issue.uid";
+        $group2 = "JOIN item ON page.item_id = item.item_uid
+            JOIN issue ON item.issue_id = issue.issue_uid
+            JOIN title ON issue.title_id = title.title_uid";
+            // JOIN mod_stb ON page.text_uid = mod_stb.text_uid
+            // JOIN mod_std ON page.issue_id = mod_std.doc_uid
+            // JOIN mod_stg ON title.genre_p = mod_stg.mod_uid
+            // JOIN mod_snt ON page.text_uid = mod_snt.text_uid
+            // JOIN mod_tma ON page.text_uid = mod_tma.text_uid
+            // JOIN topic_clusters ON mod_tma.topic1 = topic_clusters.key_uid
 
-        if ($operand == "PHRASE") { // natural language mode
+        if ($operand == "PHRASE") {
+            // natural language mode
             $query =
                 "SELECT *, substring(text, locate('sherlock', text)-450, 900) AS snippet
                 FROM page $group2
                 WHERE MATCH (text) AGAINST ('sherlock' IN NATURAL LANGUAGE MODE)
                 AND text_charlen > 500
                 LIMIT 0, 250";
-        
-        } else { // boolean mode
+
+        } else {
+            // boolean mode
 
             if ($operand == "AND") {
                 $op = "+";
@@ -274,30 +278,33 @@ if ($search_type == "fulltext") {
             } elseif ($operand == "NOT") {
                 $op = "-";
             }
-            $search_str = 
+            $search_str =
                 "(MATCH(text) AGAINST (";
 
             foreach ($search_terms as $term) {
                 $search_str .= "'" . $op . $term . "' ";
             }
-            $search_str .= " IN BOOLEAN MODE)";
+            $search_str .= " IN BOOLEAN MODE)) ";
 
-            $query .= 
-                    "SELECT *, " . $search_str . 
-                    "AS relevance, 
-                    substring(
-                        text,
-                        locate('$search_text', text)-440, 880
-                    ) AS snippet
-                    FROM page $group
-                    WHERE" . $search_str .
-                    "AND text_charlen > 500
-                    ORDER BY relevance DESC LIMIT 0, 250";
+            $query =
+                "SELECT *, " . $search_str .
+                "AS relevance,
+                substring(
+                    text,
+                    locate('$search_text', text)-440, 880
+                ) AS snippet
+                FROM page 
+                WHERE" . $search_str .
+                "AND text_charlen > 500
+                ORDER BY relevance DESC LIMIT 0, 250";
+            // print_r($query);
         }
 
         try {
             $stmt     = $dbo->query($query);
-            $fulltext = $stmt->fetchAll();
+            if ($stmt != false) {
+                $fulltext = $stmt->fetchAll();
+            }
         } catch (PDOException $e) {
             print_r($e->getMessage());
         }
@@ -305,49 +312,21 @@ if ($search_type == "fulltext") {
             $search_result[] = $row;
         }
 
-// $no = $search_result->rowCount();
-        $no = 0;
+$no = count($search_result);
         if ($no == 0) {
-            ?>
-    <br /><p align=center>No records matched your search.</p>";
-    <p align=justify><span class=\"style17\"> \"" . $query . "\" </span></p>
-<?php
-} else {
+            print_r("No results");
+        } else {
             if ($no > 0) {
-                ?>
-
-    <table width=99% border=1 align=center cellpadding=1><tr style='background-color:#ffcc66'>
-            <td><span class=style46>[relevance]</span></td>
-            <td width=14.3%><span class=style46>[style scores]</span></td>
-            <td width=7.2%><span class=style46>[topic models]</span></td>
-            <td width=6%><span class=style46>[sentiment]</span></td>
-            <td><span class=style46>[strpos match]</span> + <span class="style49">strpos</span> <span class="style48">MATCH ON</span> [" . $no . "] <span class=style19>OUT OF</span> [" . $bib . "] <span class=style46> [ ITEMS ]</span> + <span class=style19>page</span> <span class="style48">COUNT</span> of [" . $tps . "] + <span class="style49">strlen</span> <span class=\"style48\">COUNT</span> of [" . $twc . "].</td>
-            <td align=right><span class=style46>[charlen]</span></td>
-            <td width=5% align=right><span class=style46>[text models]</span></td>
-            <td align=right><span class=style46>[ @FACS ]</span></td></tr>
-<?php
-$rowColor = array(
-                    '2gw' => '#fffddd',
-                    'adv' => '#fffbbb',
-                    'ams' => '#FFFFFF',
-                    'bed' => '#ffcc99',
-                    'bm'  => '#fffbbb',
-                    'dsm' => '#FFFFFF',
-                    'ico' => '#fffddd',
-                    'liv' => '#FFFFFF',
-                    'lsm' => '#fffbbb',
-                    'nlt' => '#fffddd',
-                    'ran' => '#fffbbb',
-                    'sau' => '#fffddd',
-                    'sma' => '#FFFFFF',
-                    'wei' => '#fffbbb');
-
                 foreach ($search_result as $row) {
+                    print_r("<pre>");
+                    print_r($row);
+                    print_r("</pre>");
                 }
             }
         }
     }
 }
+
 ?>
     </body>
     </html>
