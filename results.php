@@ -118,29 +118,27 @@ $dbo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
 
 <?php
 
-$q           = $_GET['q'];
-$search_text = $_GET['search_text'];
+$search_type = $_POST['search_type'];
+$search_text = $_POST['search_text'];
+$operand     = $_POST['operand'];
+
+$search_text = trim($search_text);
+$search_terms = explode(" ", $search_text);
 
 if (empty($search_text) || strlen($search_text) == 0) {
     echo "Empty results";
-}
+} else {
 
 /**
  * search metadata
  */
-// $query_view =
-//     "CREATE VIEW metadata as
-//         SELECT `title`.*, `persons`.`name` as `pers_name, `publishers`.*
-//         FROM title, publishers, persons
-//         WHERE `title`.`person_id` = `persons`.`id` AND `title`.`publishers_id` = `publishers`.`id`";
-// $dbo->exec($query_view);
-$search_result = array();
-if (isset($q) and $q == "metadata") {
-    $search_text = trim($search_text);
 
-    // perform exact match
-    $query =
-        "SELECT *
+    $search_result = array();
+    if ($search_type == "metadata") {
+
+        // perform exact match
+        $query =
+            "SELECT *
         FROM metadata
         WHERE `title_j` = $search_text OR
             `pers_name` = $search_text OR
@@ -150,50 +148,49 @@ if (isset($q) and $q == "metadata") {
         ORDER BY `title_j`
     ";
 
-    $exact = array();
-    try {
-        // echo $query;
-        $stmt = $dbo->query($query);
+        $exact = array();
+        try {
+            // echo $query;
+            $stmt = $dbo->query($query);
 
-        if ($stmt != false) {
-            $exact = $stmt->fetchAll();
+            if ($stmt != false) {
+                $exact = $stmt->fetchAll();
+            }
+        } catch (PDOException $e) {
+            print_r($e->getMessage());
         }
-    } catch (PDOException $e) {
-        print_r($e->getMessage());
-    }
-    foreach ($exact as $row) {
-        $search_result[] = $row;
-    }
+        foreach ($exact as $row) {
+            $search_result[] = $row;
+        }
 
-    // perform match anywhere
-    $any   = array();
-    $terms = explode(" ", $search_text);
-    foreach ($terms as $value) {
-        if (!empty($value)) {
-            $query =
-                "SELECT *
+        // perform match anywhere
+        $any   = array();
+        foreach ($search_terms as $value) {
+            if (!empty($value)) {
+                $query =
+                    "SELECT *
                 FROM metadata
                 WHERE title_j LIKE '%$value%' OR
                         pers_name LIKE '%$value%' OR
                         name LIKE '%$value%' OR
                         primary_genre LIKE '%$value%' OR
                         secondary_genre LIKE '%$value%'";
-            try {
-                $stmt = $dbo->query($query);
-                if ($stmt != false) {
-                    $any[] = $stmt->fetchAll();
+                try {
+                    $stmt = $dbo->query($query);
+                    if ($stmt != false) {
+                        $any[] = $stmt->fetchAll();
+                    }
+                } catch (PDOException $e) {
+                    print_r($e->getMessage());
                 }
-            } catch (PDOException $e) {
-                print_r($e->getMessage());
             }
         }
-    }
 
-    foreach ($any as $row) {
-        $search_result[] = $row;
+        foreach ($any as $row) {
+            $search_result[] = $row;
+        }
     }
-}
-?>
+    ?>
 
 
 <table width=99% border=1 align=center cellpadding=3>
@@ -214,9 +211,9 @@ if (isset($q) and $q == "metadata") {
 
     <?php
 foreach ($search_result as $val) {
-    foreach ($val as $row) {
+        foreach ($val as $row) {
 
-        ?>
+            ?>
         <tr>
             <td>
                 <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
@@ -225,80 +222,99 @@ foreach ($search_result as $val) {
             </td>
     <?php
 $attributes = array(
-            'primary_genre',
-            'size_format',
-            'paper_format',
-            'frequency',
-            'date_est',
-            'name',
-            'address',
-            'city',
-            'nation',
-            'digitized_copy',
-            'published_copy',
-        );
-        foreach ($attributes as $value) {
-            echo "<td>" . $row[$value] . "</td>";
-        }
-        ?>
+                'primary_genre',
+                'size_format',
+                'paper_format',
+                'frequency',
+                'date_est',
+                'name',
+                'address',
+                'city',
+                'nation',
+                'digitized_copy',
+                'published_copy',
+            );
+            foreach ($attributes as $value) {
+                echo "<td>" . $row[$value] . "</td>";
+            }
+            ?>
 
         </tr>
 <?php }
-}
-?>
+    }
+    ?>
 
 </table>
-<?php 
-if (isset($q) && $q == "fulltext") {
-    $type        = $_GET['type'];
-    $search_text = trim($search_text);
+<?php
+if ($search_type == "fulltext") {
+        $group = "JOIN item ON page.item_id = item.item_uid 
+            JOIN issue ON item.issue_id = issue.issue_uid 
+            JOIN title ON issue.title_id = title.title_uid
+            JOIN mod_stb ON page.text_uid = mod_stb.text_uid 
+            JOIN mod_std ON page.issue_id = mod_std.doc_uid 
+            JOIN mod_stg ON title.genre_p = mod_stg.mod_uid
+            JOIN mod_snt ON page.text_uid = mod_snt.text_uid 
+            JOIN mod_tma ON page.text_uid = mod_tma.text_uid 
+            JOIN topic_clusters ON mod_tma.topic1 = topic_clusters.key_uid";
 
-    if ($type == "BOOLEAN MODE") {
-        $query =
-            "SELECT *,
-            (   (1.3 * (MATCH(text) AGAINST ('+$search_text' IN BOOLEAN MODE))) +
-                (0.6 * (MATCH(text) AGAINST ('+$search_text' IN BOOLEAN MODE)))
-            ) AS score,
-             substring(
-                text,
-                locate('$search_text', text)-440, 880
-            ) AS snippet
-            FROM page $group2
-            WHERE (
-                    MATCH(text) AGAINST ('+$search_text' IN BOOLEAN MODE)
-                    )
-            AND text_charlen > 500
-            HAVING score > 0 ORDER BY score DESC LIMIT 0, 250";
+        if ($operand == "PHRASE") { // natural language mode
+            $query =
+                "SELECT *, substring(text, locate('sherlock', text)-450, 900) AS snippet
+                FROM page $group2
+                WHERE MATCH (text) AGAINST ('sherlock' IN NATURAL LANGUAGE MODE)
+                AND text_charlen > 500
+                LIMIT 0, 250";
+        
+        } else { // boolean mode
 
-    } elseif ($type == "NATURAL LANGUAGE MODE") {
-        $query =
-            "SELECT *, substring(text, locate('sherlock', text)-450, 900) AS snippet
-            FROM page $group2
-            WHERE MATCH (text) AGAINST ('sherlock' IN NATURAL LANGUAGE MODE)
-            AND text_charlen > 500
-            LIMIT 0, 250";
-    }
+            if ($operand == "AND") {
+                $op = "+";
+            } elseif ($operand == "OR") {
+                $op = "";
+            } elseif ($operand == "NOT") {
+                $op = "-";
+            }
+            $search_str = 
+                "(MATCH(text) AGAINST (";
 
-    try {
-        $stmt     = $dbo->query($query);
-        $fulltext = $stmt->fetchAll();
-    } catch (PDOException $e) {
-        print_r($e->getMessage());
-    }
-    foreach ($fulltext as $row) {
-        $search_result[] = $row;
-    }
+            foreach ($search_terms as $term) {
+                $search_str .= "'" . $op . $term . "' ";
+            }
+            $search_str .= " IN BOOLEAN MODE)";
+
+            $query .= 
+                    "SELECT *, " . $search_str . 
+                    "AS relevance, 
+                    substring(
+                        text,
+                        locate('$search_text', text)-440, 880
+                    ) AS snippet
+                    FROM page $group
+                    WHERE" . $search_str .
+                    "AND text_charlen > 500
+                    ORDER BY relevance DESC LIMIT 0, 250";
+        }
+
+        try {
+            $stmt     = $dbo->query($query);
+            $fulltext = $stmt->fetchAll();
+        } catch (PDOException $e) {
+            print_r($e->getMessage());
+        }
+        foreach ($fulltext as $row) {
+            $search_result[] = $row;
+        }
 
 // $no = $search_result->rowCount();
-    $no = 0;
-if ($no == 0) {
-        ?>
+        $no = 0;
+        if ($no == 0) {
+            ?>
     <br /><p align=center>No records matched your search.</p>";
     <p align=justify><span class=\"style17\"> \"" . $query . "\" </span></p>
 <?php
 } else {
-        if ($no > 0) {
-            ?>
+            if ($no > 0) {
+                ?>
 
     <table width=99% border=1 align=center cellpadding=1><tr style='background-color:#ffcc66'>
             <td><span class=style46>[relevance]</span></td>
@@ -311,22 +327,23 @@ if ($no == 0) {
             <td align=right><span class=style46>[ @FACS ]</span></td></tr>
 <?php
 $rowColor = array(
-                '2gw' => '#fffddd',
-                'adv' => '#fffbbb',
-                'ams' => '#FFFFFF',
-                'bed' => '#ffcc99',
-                'bm'  => '#fffbbb',
-                'dsm' => '#FFFFFF',
-                'ico' => '#fffddd',
-                'liv' => '#FFFFFF',
-                'lsm' => '#fffbbb',
-                'nlt' => '#fffddd',
-                'ran' => '#fffbbb',
-                'sau' => '#fffddd',
-                'sma' => '#FFFFFF',
-                'wei' => '#fffbbb');
+                    '2gw' => '#fffddd',
+                    'adv' => '#fffbbb',
+                    'ams' => '#FFFFFF',
+                    'bed' => '#ffcc99',
+                    'bm'  => '#fffbbb',
+                    'dsm' => '#FFFFFF',
+                    'ico' => '#fffddd',
+                    'liv' => '#FFFFFF',
+                    'lsm' => '#fffbbb',
+                    'nlt' => '#fffddd',
+                    'ran' => '#fffbbb',
+                    'sau' => '#fffddd',
+                    'sma' => '#FFFFFF',
+                    'wei' => '#fffbbb');
 
-            foreach ($search_result as $row) {
+                foreach ($search_result as $row) {
+                }
             }
         }
     }

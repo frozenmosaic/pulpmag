@@ -151,42 +151,32 @@ try {
 
                         <!-- Displaying the METADATA search box  -->
                         <table width=99% align=center>
-                            <form method=get action='results.php'>
-                                <input type="hidden" name="q" value="metadata">
-                                <td valign=top align=center width=25%>
-                                    <input type="text" size="50" name="search_text"/>
-                                </td>
-                                <td valign=top align=center width=25%>
-                                    <input type=submit value='Search Metadata' class=form-submit/>
-                                </td>
-                            </form>
-                        </table>
-                        <!-- Displaying the FULLTEXT search box  -->
-                        <table width=99% align=center>
                             <tr>
-                                <td>
-                                    <form method=get action='results.php'>
-                                        <input type=hidden name="q" value="fulltext"/>
-                                        <td valign=top align=center width=25%>
-                                            <br/>
-                                            <input type=text size=50 name=search_text/>
-                                        </td>
-                                        <td valign=bottom align=center width=25%>
-                                            <input type=radio name=type value='NATURAL LANGUAGE MODE' checked/>Natural language
-
-                                        </td>
-                                        <td valign=bottom align=center width=25%>
-                                            <input type=radio name=type value='BOOLEAN MODE'/>In Boolean mode
-
-                                        </td>
-                                        <td valign=top align=center width=25%>
-                                            <br/>
-                                            <input type=submit value='Search Full-Text' class=form-submit/>
-                                        </td>
-                                    </form>
-                                </td>
+                                <form method="post" action="process.php">
+                                    <td valign=top align=center width=25%>
+                                        <input type="text" size="50" name="search_text"/>
+                                    </td>
+                                    <td>
+                                        <select name="operand">
+                                            <option>AND</option>
+                                            <option>OR</option>
+                                            <option>NOT</option>
+                                            <option>PHRASE</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="search_type">
+                                            <option>Search Metadata</option>
+                                            <option>Search Full-text</option>
+                                        </select>
+                                    </td>
+                                    <td valign=top align=center width=25%>
+                                        <input type=submit value='Search' class=form-submit/>
+                                    </td>
+                                </form>
                             </tr>
                         </table>
+
 <?php
 
 $todo        = isset($_GET['q']) ? $_GET['q'] : '';
@@ -269,7 +259,7 @@ foreach ($res as $row) {
             </a>
         </td>
     <?php
-    foreach ($attributes as $value) {
+foreach ($attributes as $value) {
         echo "<td>" . $row[$value] . "</td>";
     }
     ?>

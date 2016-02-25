@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Search Form
+        </title>
+    </head>
+    <body>
+        <table width=99% align=center>
+            <tr>
+                <form method="post" action="process.php">
+                    <td valign=top align=center width=25%>
+                        <input type="text" size="50" name="search_text"/>
+                    </td>
+                    <td>
+                    	<select name="operand">
+                    		<option>AND</option>
+                    		<option>OR</option>
+                    		<option>NOT</option>
+                    		<option>PHRASE</option>
+                    	</select>
+                    </td>
+                    <td>
+                    	<select name="search_type">
+                    		<option>Search Metadata</option>
+                    		<option>Search Full-text</option>
+                    	</select>
+                    </td>
+                    <td valign=top align=center width=25%>
+                        <input type=submit value='Search' class=form-submit/>
+                    </td>
+                </form>
+            </tr>
+        </table>
+    </body>
+</html>

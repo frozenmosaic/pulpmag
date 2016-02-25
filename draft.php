@@ -1,38 +1,4 @@
-<?php 
 
-foreach ($search_result as $row) {
-        ?>
-
-        <tr style='background-color:" . $rowColor[$row['primary_genre']] . "'>
-            <td>
-                <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
-                    <em>$row[title_j]</em>
-                </a>
-            </td>
-            <?php
-$attributes = array(
-            'title_j',
-            'primary_genre',
-            'size_format',
-            'paper_format',
-            'frequency',
-            'date_est',
-            'name',
-            'address',
-            'city',
-            'nation',
-            'digitized_copy',
-            'published_copy',
-        );
-        foreach ($attributes as $value) {
-            echo "<td>" . $row[$value] . "</td>";
-        }
-        ?>
-
-        </tr>
-    <?php }
-    ?>
-?>
 <?php
 $type        = $_GET['type'];
     $search_text = trim($search_text);
