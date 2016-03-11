@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Search Interface
+        </title>
+        <link type="text/css" rel="stylesheet" href="css/normalize.css"/>
+        <link type="text/css" rel="stylesheet" href="css/skeleton.css"/>
+        <script type="text/javascript" src="jquery-1.12.1.js">
+        </script>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.1/jquery.min.js">
+        </script>
+        <script type="text/javascript" src="script.js">
+        </script>
+    </head>
+    <body>
+        <div id='new'>
+            <form method="post" action="test_search.php">
+                <table width=60% align=center>
+                    <tr id="search-phrase" data-id=1>
+                        <td align=center width=25% colspan="3">
+                            <input type="text" size="50" name="search_text[]"/>
+                        </td>
+                        <td>
+                            <button type="button" id="add-phrase">
+                                +
+                            </button>
+                        </td>
+                    </tr>
+                    <tr style="display:none" id="phraseTemplate" class="formGroup" data-id=2>
+                        <td>
+                            <select name="operator[]">
+                                <option>
+                                    and
+                                </option>
+                                <option>
+                                    or
+                                </option>
+                                <option>
+                                    not
+                                </option>
+                            </select>
+                        </td>
+                        <td align=center width=25% colspan="3">
+                            <input type="text" size="50" name="search_text[]"/>
+                        </td>
+                        <td>
+                            <button type="button" id="remove-phrase">
+                                -
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <select name="search_type" id="select">
+                                <option>
+                                    Search Type...
+                                </option>
+                                <option>
+                                    Metadata
+                                </option>
+                                <option>
+                                    Full-text
+                                </option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button type=submit class=form-submit>
+                                Search
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </body>
+</html>

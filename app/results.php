@@ -135,32 +135,32 @@ if (empty($search_text) || strlen($search_text) == 0) {
 
     $search_result = array();
     if ($search_type == "Search Metadata") {
-
         // perform exact match
         $query =
             "SELECT *
         FROM metadata
-        WHERE `title_j` = $search_text OR
-            `pers_name` = $search_text OR
-            `name` = $search_text OR
-            `primary_genre` = $search_text OR
-            `secondary_genre` = $search_text;
-        ORDER BY `title_j`
-    ";
+        WHERE title_j = '$search_text' OR
+            pers_name = '$search_text' OR
+            name = '$search_text' OR
+            primary_genre = '$search_text' OR
+            secondary_genre = '$search_text'
+        ORDER BY title_j ASC";
 
         $exact = array();
         try {
-            // echo $query;
             $stmt = $dbo->query($query);
-
             if ($stmt != false) {
                 $exact = $stmt->fetchAll();
             }
         } catch (PDOException $e) {
             print_r($e->getMessage());
         }
+
+        $inserted_rec = array();
         foreach ($exact as $row) {
             $search_result[] = $row;
+            $inserted_rec[]  = $row['title_id'];
+
         }
 
         // perform match anywhere
@@ -178,16 +178,18 @@ if (empty($search_text) || strlen($search_text) == 0) {
                 try {
                     $stmt = $dbo->query($query);
                     if ($stmt != false) {
-                        $any[] = $stmt->fetchAll();
+                        $stmt = $stmt->fetchAll();
+                        foreach ($stmt as $row) {
+                            if (!in_array($row['title_id'], $inserted_rec)) {
+                                $search_result[] = $row;
+                            }
+                        }
                     }
                 } catch (PDOException $e) {
                     print_r($e->getMessage());
                 }
-            }
-        }
 
-        foreach ($any as $row) {
-            $search_result[] = $row;
+            }
         }
     }
     ?>
@@ -210,10 +212,9 @@ if (empty($search_text) || strlen($search_text) == 0) {
     </tr>
 
     <?php
-foreach ($search_result as $val) {
-        foreach ($val as $row) {
+    foreach ($search_result as $row) {
 
-            ?>
+        ?>
         <tr>
             <td>
                 <a href='http://www.pulpmags.org/$row[title_url].html' target='_blank'>
@@ -222,49 +223,49 @@ foreach ($search_result as $val) {
             </td>
     <?php
 $attributes = array(
-                'primary_genre',
-                'size_format',
-                'paper_format',
-                'frequency',
-                'date_est',
-                'name',
-                'address',
-                'city',
-                'nation',
-                'digitized_copy',
-                'published_copy',
-            );
-            foreach ($attributes as $value) {
-                echo "<td>" . $row[$value] . "</td>";
-            }
-            ?>
+            'primary_genre',
+            'size_format',
+            'paper_format',
+            'frequency',
+            'date_est',
+            'name',
+            'address',
+            'city',
+            'nation',
+            'digitized_copy',
+            'published_copy',
+        );
+        foreach ($attributes as $value) {
+            echo "<td>" . $row[$value] . "</td>";
+        }
+        ?>
 
         </tr>
-<?php }
-    }
+<?php
+}
     ?>
 
 </table>
 <?php
 if ($search_type == "Search Full-text") {
-        $group = "page, item, issue, title 
+        $group = "page, item, issue, title
                 WHERE page.issue_id = issue.uid";
         $group2 = "JOIN item ON page.item_id = item.item_uid
             JOIN issue ON item.issue_id = issue.issue_uid
             JOIN title ON issue.title_id = title.title_uid";
-            // JOIN mod_stb ON page.text_uid = mod_stb.text_uid
-            // JOIN mod_std ON page.issue_id = mod_std.doc_uid
-            // JOIN mod_stg ON title.genre_p = mod_stg.mod_uid
-            // JOIN mod_snt ON page.text_uid = mod_snt.text_uid
-            // JOIN mod_tma ON page.text_uid = mod_tma.text_uid
-            // JOIN topic_clusters ON mod_tma.topic1 = topic_clusters.key_uid
+        // JOIN mod_stb ON page.text_uid = mod_stb.text_uid
+        // JOIN mod_std ON page.issue_id = mod_std.doc_uid
+        // JOIN mod_stg ON title.genre_p = mod_stg.mod_uid
+        // JOIN mod_snt ON page.text_uid = mod_snt.text_uid
+        // JOIN mod_tma ON page.text_uid = mod_tma.text_uid
+        // JOIN topic_clusters ON mod_tma.topic1 = topic_clusters.key_uid
 
         if ($operand == "PHRASE") {
             // natural language mode
             $query =
-                "SELECT *, substring(text, locate('sherlock', text)-450, 900) AS snippet
+                "SELECT *, substring(text, locate('$search_text', text)-450, 900) AS snippet
                 FROM page $group2
-                WHERE MATCH (text) AGAINST ('sherlock' IN NATURAL LANGUAGE MODE)
+                WHERE MATCH (text) AGAINST ('$search_text' IN NATURAL LANGUAGE MODE)
                 AND text_charlen > 500
                 LIMIT 0, 250";
 
@@ -293,15 +294,16 @@ if ($search_type == "Search Full-text") {
                     text,
                     locate('$search_text', text)-440, 880
                 ) AS snippet
-                FROM page 
+                FROM page
                 WHERE" . $search_str .
                 "AND text_charlen > 500
-                ORDER BY relevance DESC LIMIT 0, 250";
+                ORDER BY 1 DESC LIMIT 0, 250";
             // print_r($query);
         }
 
         try {
-            $stmt     = $dbo->query($query);
+            print_r($query);
+            $stmt = $dbo->query($query);
             if ($stmt != false) {
                 $fulltext = $stmt->fetchAll();
             }
@@ -312,7 +314,7 @@ if ($search_type == "Search Full-text") {
             $search_result[] = $row;
         }
 
-$no = count($search_result);
+        $no = count($search_result);
         if ($no == 0) {
             print_r("No results");
         } else {
